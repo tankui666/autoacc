@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>无障碍开机自启</title>
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --text: #1a1a1a;
+      --text2: #8a8a8e;
+      --accent: #ff6900;      /* 小米橙 */
+      --radius: 20px;
+      --shadow: 0 1px 6px rgba(0,0,0,0.04);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, "MiSans", "HarmonyOS Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 24px);
+    }
+    .header { padding: 8px 4px 16px; }
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: .5px;
+    }
+    .header .sub { color: var(--text2); font-size: 13px; margin-top: 4px; }
+
+    .search-wrap { position: relative; margin: 4px 0 12px; }
+    .search-wrap input {
+      width: 100%;
+      height: 44px;
+      border: none;
+      outline: none;
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 0 16px 0 42px;
+      font-size: 15px;
+      color: var(--text);
+    }
+    .search-wrap .ico {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      width: 18px; height: 18px; opacity: .5;
+    }
+
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 12px 16px; margin-bottom: 12px;
+    }
+    .toolbar .label { font-size: 14px; }
+    .toolbar .count { font-size: 13px; color: var(--text2); }
+
+    /* Material 风格开关 */
+    .switch { position: relative; display: inline-block; width: 48px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; inset: 0; border-radius: 28px;
+      background: #e0e0e0; transition: .2s;
+    }
+    .slider:before {
+      content: ""; position: absolute; height: 22px; width: 22px; left: 3px; top: 3px;
+      background: #fff; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .switch input:checked + .slider { background: var(--accent); }
+    .switch input:checked + .slider:before { transform: translateX(20px); }
+
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .app-item {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 12px 16px;
+    }
+    .app-icon {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      background: #f0f0f2;
+    }
+    .app-info { flex: 1; min-width: 0; }
+    .app-name { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .app-pkg { font-size: 12px; color: var(--text2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge {
+      font-size: 10px; color: #fff; background: #b0b0b6; border-radius: 6px; padding: 1px 6px;
+    }
+    .unauthed { font-size: 12px; color: #b0b0b6; }
+    .auth-btn {
+      font-size: 12px; color: #fff; background: var(--accent); border: none;
+      border-radius: 14px; padding: 6px 12px; cursor: pointer; white-space: nowrap;
+    }
+    .pulldown {
+      text-align: center; color: var(--text2); font-size: 12px; height: 0;
+      overflow: hidden; transition: height .2s, opacity .2s; opacity: 0;
+    }
+    .pulldown.active { height: 40px; line-height: 40px; opacity: 1; }
+    .pulldown.loading-txt { color: var(--accent); }
+
+    .loading { text-align: center; color: var(--text2); padding: 60px 0; font-size: 14px; }
+    .footer-note {
+      margin-top: 16px; font-size: 12px; color: var(--text2); line-height: 1.6; padding: 0 4px;
+    }
+    .accent { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>无障碍开机自启</h1>
+    <div class="sub">勾选开机自动启用的无障碍服务</div>
+  </div>
+
+  <div class="search-wrap">
+    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+    <input id="search" type="text" placeholder="搜索应用名称或包名">
+  </div>
+
+  <div class="toolbar">
+    <span class="label">显示系统应用</span>
+    <span class="count" id="count"></span>
+    <label class="switch"><input type="checkbox" id="systemToggle"><span class="slider"></span></label>
+  </div>
+
+  <div id="loading" class="loading">加载中…</div>
+  <div id="pulldown" class="pulldown">↓ 下拉刷新</div>
+  <div class="list" id="list"></div>
+
+  <div class="footer-note">
+    已授权应用可直接勾选，开机自动启用。未授权应用请点击右侧「授权」在系统开启一次（仅首次，Android 安全机制要求），返回后下拉刷新即可勾选。
+  </div>
+
+  <script src="kernelsu.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
