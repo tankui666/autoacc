@@ -1,0 +1,6 @@
+id=autoacc
+name=无障碍开机自启
+version=4
+versionCode=4
+author=Github@tankui666
+description=开机自动启用无障碍服务。打开模块页面(WebUI)可搜索应用、勾选开机自启的无障碍。仅开机执行一次，不后台驻留。配置目录：/data/adb/modules/autoacc/config/acc.conf
